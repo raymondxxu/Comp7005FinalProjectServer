@@ -66,18 +66,19 @@ public struct Server {
             print("Accept client: \(socketManager.clientIPAddr!) successfully")
             while (receivedBuffer[0] != 0) {
                 let _ = read(socketManager.serverAcceptFD!, &receivedBuffer, 1023)
-                let file = String(cString: receivedBuffer)
-                let fileName = file.split(separator: "_").first ?? ""
-                let fileContent = file.split(separator: "_").last ?? ""
-                if !fileName.isEmpty && !fileContent.isEmpty {
-                    do {
-                        debugPrint("receive file \(fileName)")
-                        try fileManager.createFile(with: String(fileName), for: String(fileContent))
-                    } catch {
-                        print("Failed to create file")
-                        exit(-1)
-                    }
-                }
+                print(String(cString: receivedBuffer))
+//                let file = String(cString: receivedBuffer)
+//                let fileName = file.split(separator: "_").first ?? ""
+//                let fileContent = file.split(separator: "_").last ?? ""
+//                if !fileName.isEmpty && !fileContent.isEmpty {
+//                    do {
+//                        debugPrint("receive file \(fileName)")
+//                        try fileManager.createFile(with: String(fileName), for: String(fileContent))
+//                    } catch {
+//                        print("Failed to create file")
+//                        exit(-1)
+//                    }
+//                }
             }
             fileManager.goBackToParentFolder()
         }
