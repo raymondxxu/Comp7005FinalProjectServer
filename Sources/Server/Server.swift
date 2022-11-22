@@ -6,7 +6,8 @@ import Foundation
 public struct Server {
 
     public static func main() {
-        let argParser = ArgParser.serverShared
+        var lastReceivedID: Int = -1
+        let argParser = ArgParser.receiverArgParser
         do {
             try argParser.parse()
         } catch(let error) {
@@ -18,9 +19,6 @@ public struct Server {
         debugPrint("port number is \(port)")
         let socketManager = SocketManager(isForServer: true, serverIP: "", port: port)
         let fileManager = CommonLib.FileManager.shared
-        if let dir = argParser.serverDir {
-            try! fileManager.changeWorkingDir(with: dir)
-        }
         //MARK: - create socket
         do {
             try socketManager.createSocket()
@@ -56,31 +54,29 @@ public struct Server {
                 print("Failed to listen")
                 exit(-1)
             }
-
-
-
-            var receivedBuffer = Array<CChar>(repeating: 0, count: 2048)
-            receivedBuffer[0] = -1
+           
             socketManager.getClientIpAddr()
-            try! fileManager.crateWorkingDir(with: socketManager.clientIPAddr!)
             print("Accept client: \(socketManager.clientIPAddr!) successfully")
-            while (receivedBuffer[0] != 0) {
-                let _ = read(socketManager.serverAcceptFD!, &receivedBuffer, 1023)
-                print(String(cString: receivedBuffer))
-//                let file = String(cString: receivedBuffer)
-//                let fileName = file.split(separator: "_").first ?? ""
-//                let fileContent = file.split(separator: "_").last ?? ""
-//                if !fileName.isEmpty && !fileContent.isEmpty {
-//                    do {
-//                        debugPrint("receive file \(fileName)")
-//                        try fileManager.createFile(with: String(fileName), for: String(fileContent))
-//                    } catch {
-//                        print("Failed to create file")
-//                        exit(-1)
-//                    }
-//                }
+            while true {
+                var receivedBuffer = Array<CChar>(repeating: 0, count: 1024)
+                let bytes = read(socketManager.serverAcceptFD!, &receivedBuffer, 1024)
+                if let json = (DataModel.convert(from: String(utf8String: receivedBuffer)!) as? DataModel) {
+                    print(String(cString: receivedBuffer))
+                    print(json)
+                    if json.id == lastReceivedID + 1 {
+                        lastReceivedID = json.id
+                    }
+                    let objectData = DataModel(seq: lastReceivedID, type: .ASK, data: nil)
+                    let cStr = (objectData as JsonStringConvertible).convert()! as NSString
+                    write(socketManager.serverAcceptFD!, cStr.cString(using: String.Encoding.ascii.rawValue), cStr.length)
+                    if bytes == -1 {
+                        break
+                    }
+                } else {
+                    break
+                }
             }
-            fileManager.goBackToParentFolder()
         }
+                
     }
 }
