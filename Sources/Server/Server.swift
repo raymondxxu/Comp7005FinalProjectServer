@@ -66,15 +66,13 @@ public struct Server {
                     if json.id == lastReceivedID + 1 {
                         lastReceivedID = json.id
                     }
-                    while true {
-                        let objectData = DataModel(seq: lastReceivedID, type: .ASK, data: nil)
-                        let cStr = (objectData as JsonStringConvertible).convert()! as NSString
-                        write(socketManager.serverAcceptFD!, cStr.cString(using: String.Encoding.ascii.rawValue), cStr.length)
-                        if bytes == -1 {
-                            break
-                        }
-                        sleep(1)
-                    }
+                    let objectData = DataModel(seq: lastReceivedID, type: .ASK, data: nil)
+                    let cStr = (objectData as JsonStringConvertible).convert()! as NSString
+                    write(socketManager.serverAcceptFD!, cStr.cString(using: String.Encoding.ascii.rawValue), cStr.length)
+                    if bytes == -1 {
+                        break
+                     }
+                    
                 } else {
                     break
                 }
