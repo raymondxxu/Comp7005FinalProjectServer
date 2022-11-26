@@ -6,7 +6,11 @@
       "location" : "https://github.com/raymondxxu/Comp7005FinalProjectCommonLib",
       "state" : {
         "branch" : "main",
+<<<<<<< HEAD
         "revision" : "085415f62e90194cb786bdd283f1eb99d2bca7fb"
+=======
+        "revision" : "cfa9fbacd5464b01b559515f11dbc5199a1eba21"
+>>>>>>> 41f13decc4266f274ca6b87218e5eb01fd6a150e
       }
     },
     {

@@ -8,6 +8,10 @@ public struct Server {
     public static func main() {
         var lastReceivedID: Int = -1
         let argParser = ArgParser.receiverArgParser
+        var dataSended = [DataModel]()
+        var dataReceived = [DataModel]()
+        var sendingCount = 0
+        var receivingCount = 0
         do {
             try argParser.parse()
         } catch(let error) {
@@ -57,26 +61,36 @@ public struct Server {
            
             socketManager.getClientIpAddr()
             print("Accept client: \(socketManager.clientIPAddr!) successfully")
-            while true {
+            var readBytes = 0
+            repeat {
                 var receivedBuffer = Array<CChar>(repeating: 0, count: 1024)
-                let bytes = read(socketManager.serverAcceptFD!, &receivedBuffer, 1024)
+                readBytes = read(socketManager.serverAcceptFD!, &receivedBuffer, 1024)
+                receivingCount += 1
                 if let json = (DataModel.convert(from: String(utf8String: receivedBuffer)!) as? DataModel) {
-                    print(String(cString: receivedBuffer))
+                    //print(String(cString: receivedBuffer))
+                    dataReceived.append(json)
                     print(json)
-                    if json.id == lastReceivedID + 1 {
-                        lastReceivedID = json.id
-                    }
+                    lastReceivedID = json.id
                     let objectData = DataModel(seq: lastReceivedID, type: .ASK, data: nil)
                     let cStr = (objectData as JsonStringConvertible).convert()! as NSString
-                    write(socketManager.serverAcceptFD!, cStr.cString(using: String.Encoding.ascii.rawValue), cStr.length)
-                    if bytes == -1 {
-                        break
-                     }
+                    let writeBytes = write(socketManager.serverAcceptFD!, cStr.cString(using: String.Encoding.ascii.rawValue), cStr.length)
+                    dataSended.append(objectData)
+                    if writeBytes != -1 {
+                       print("send: \(objectData)\n successfull ")
+                    } 
+                    if writeBytes > 0 {
+                         sendingCount += 1         
+                    }
                     
                 } else {
                     break
                 }
-            }
+                print("number of packets sended: \(sendingCount)")
+                print("number of packets received: \(receivingCount)")
+                print("Actual Drop \(abs(100 - Double(receivingCount) / Double(sendingCount) * 100))%")
+            } while readBytes != -1 
+            print("Received data ------------- data packate")
+            Array(Set(dataReceived)).sorted{$0.id < $1.id}.forEach{ print($0) }
         }
                 
     }
